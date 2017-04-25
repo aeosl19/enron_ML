@@ -74,7 +74,7 @@ from sklearn.naive_bayes import GaussianNB
 # clf = GaussianNB()
 
 from sklearn.tree import DecisionTreeClassifier
-clf = DecisionTreeClassifier()
+clf = DecisionTreeClassifier(min_samples_split=2)
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
