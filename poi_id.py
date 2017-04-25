@@ -6,26 +6,50 @@ sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data
+import numpy as np
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi','salary'] # You will need to use more features
+features_list = ['poi','salary', 'bonus', 'exercised_stock_options',
+                 'from_this_person_to_poi', 'from_poi_to_this_person'] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
     data_dict = pickle.load(data_file)
 
+data_dict.pop('TOTAL', None)
+data_dict.pop('THE TRAVEL AGENCY IN THE PARK', None)
+
+# key_list = [k for k in data_dict.keys() if data_dict[k]["salary"] != 'NaN' and data_dict[k]["salary"] > 1000000 and data_dict[k]["bonus"] > 5000000]
+#
+# for k in key_list:
+#     print k, " Salary: ", data_dict[k]["salary"], " Bonus: ", data_dict[k]["bonus"]
+
+def check_nan(data):
+    if data == 'NaN':
+        return 0.0
+    return data
+
+
+for person in data_dict:
+    print check_nan(data_dict[person]['from_this_person_to_poi'])
+
+    data_dict[person]['total_poi_emails'] = check_nan(data_dict[person]['from_this_person_to_poi']) + check_nan(data_dict[person]['from_poi_to_this_person'])
+
+# print data_dict['SKILLING JEFFREY K']
+
 ### Task 2: Remove outliers
 ### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
+# print my_dataset['SKILLING JEFFREY K']
 
-print my_dataset
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
+
 
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
