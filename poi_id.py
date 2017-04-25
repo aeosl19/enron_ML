@@ -43,7 +43,7 @@ for person in data_dict:
 ### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
-print my_dataset['SKILLING JEFFREY K']
+#print my_dataset['SKILLING JEFFREY K']
 
 import matplotlib.pyplot as plt
 bonus = []
@@ -73,10 +73,11 @@ labels, features = targetFeatureSplit(data)
 from sklearn.naive_bayes import GaussianNB
 # clf = GaussianNB()
 
-from sklearn.tree import DecisionTreeClassifier
-clf = DecisionTreeClassifier(min_samples_split=2)
 
-#filler tekst
+## add scaler - standardize features
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler()
+features = scaler.fit_transform(features)
 
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
@@ -90,11 +91,31 @@ clf = DecisionTreeClassifier(min_samples_split=2)
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 
+
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.metrics.classification import classification_report
+
+rfc = RandomForestClassifier()
+svc = SVC()
+steps = [("rfc_classifier", rfc)]
+parameters = {"rfc_classifier__min_samples_split" : [2, 3, 4]}
+pipe = Pipeline(steps)
+clf = GridSearchCV(pipe, param_grid= parameters)
 clf.fit(features_train, labels_train)
 pred = clf.predict(features_test)
 report = classification_report(labels_test, pred)
 print report
+
+
+
+# from sklearn.metrics.classification import classification_report
+# clf.fit(features_train, labels_train)
+# pred = clf.predict(features_test)
+# report = classification_report(labels_test, pred)
+# print report
 
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
