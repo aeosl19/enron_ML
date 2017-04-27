@@ -5,7 +5,7 @@ import pickle
 sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
-from tester import dump_classifier_and_data
+from tester import dump_classifier_and_data, test_classifier
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectKBest
@@ -14,24 +14,24 @@ from sklearn.feature_selection import SelectKBest
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
 features_list = ['poi','salary', 'bonus', 'exercised_stock_options',
-                 'total_poi_emails', 'long_term_incentive', 'total_stock_value'] # You will need to use more features
+                 'total_poi_emails', 'long_term_incentive', 'total_stock_value', 'restricted_stock'] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
     data_dict = pickle.load(data_file)
 
+### remove known outliers we know by name
+
 data_dict.pop('TOTAL', None)
 data_dict.pop('THE TRAVEL AGENCY IN THE PARK', None)
 
-# key_list = [k for k in data_dict.keys() if data_dict[k]["salary"] != 'NaN' and data_dict[k]["salary"] > 1000000 and data_dict[k]["bonus"] > 5000000]
-#
-# for k in key_list:
-#     print k, " Salary: ", data_dict[k]["salary"], " Bonus: ", data_dict[k]["bonus"]
+## check for NAN i value
 
 def check_nan(data):
     if data == 'NaN':
         return 0.0
     return data
+
 
 for person in data_dict:
     data_dict[person]['total_poi_emails'] = check_nan(data_dict[person]['from_this_person_to_poi']) +\
@@ -43,17 +43,16 @@ for person in data_dict:
 ### Task 3: Create new feature(s)
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
-#print my_dataset['SKILLING JEFFREY K']
 
-import matplotlib.pyplot as plt
-bonus = []
-total_poi_emails = []
-
-for person in my_dataset:
-    bonus.append(check_nan(my_dataset[person]['bonus']))
-    total_poi_emails.append(my_dataset[person]['total_poi_emails'])
-
-plt.scatter(bonus, total_poi_emails)
+# import matplotlib.pyplot as plt
+# bonus = []
+# total_poi_emails = []
+#
+# for person in my_dataset:
+#     bonus.append(check_nan(my_dataset[person]['bonus']))
+#     total_poi_emails.append(my_dataset[person]['total_poi_emails'])
+#
+# plt.scatter(bonus, total_poi_emails)
 # plt.show()
 
 
@@ -98,24 +97,19 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics.classification import classification_report
 
-rfc = RandomForestClassifier()
+# rfc = RandomForestClassifier()
 svc = SVC()
-steps = [("rfc_classifier", rfc)]
-parameters = {"rfc_classifier__min_samples_split" : [2, 3, 4]}
+# steps = [("rfc_classifier", rfc)]
+# parameters = {"rfc_classifier__min_samples_split" : [2, 3, 4]}
+steps = [('scaling',scaler),("svc_classifier", svc)]
+parameters = {'svc_classifier__kernel':('linear', 'rbf'), 'svc_classifier__C':[1, 10]}
 pipe = Pipeline(steps)
+# print "test:", pipe.get_params().keys()
 clf = GridSearchCV(pipe, param_grid= parameters)
 clf.fit(features_train, labels_train)
 pred = clf.predict(features_test)
 report = classification_report(labels_test, pred)
 print report
-
-
-
-# from sklearn.metrics.classification import classification_report
-# clf.fit(features_train, labels_train)
-# pred = clf.predict(features_test)
-# report = classification_report(labels_test, pred)
-# print report
 
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
@@ -124,3 +118,4 @@ print report
 ### generates the necessary .pkl files for validating your results.
 
 dump_classifier_and_data(clf, my_dataset, features_list)
+#test_classifier(clf, my_dataset, features_list)
