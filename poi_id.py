@@ -8,7 +8,6 @@ from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data, test_classifier
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import SelectKBest
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -44,6 +43,7 @@ for person in data_dict:
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
 
+
 # import matplotlib.pyplot as plt
 # bonus = []
 # total_poi_emails = []
@@ -78,6 +78,10 @@ from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
 features = scaler.fit_transform(features)
 
+from sklearn.feature_selection import SelectKBest
+skb = SelectKBest(k = 4)
+
+
 ### Task 5: Tune your classifier to achieve better than .3 precision and recall 
 ### using our testing script. Check the tester.py script in the final project
 ### folder for details on the evaluation method, especially the test_classifier
@@ -93,7 +97,6 @@ features_train, features_test, labels_train, labels_test = \
 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.metrics.classification import classification_report
 
@@ -101,16 +104,16 @@ from sklearn.metrics.classification import classification_report
 svc = SVC()
 # steps = [("rfc_classifier", rfc)]
 # parameters = {"rfc_classifier__min_samples_split" : [2, 3, 4]}
-steps = [('scaling',scaler),("svc_classifier", svc)]
+steps = [('scaling',scaler),("SKB", skb),("svc_classifier", svc)]
 parameters = {'svc_classifier__kernel':('linear', 'rbf'), 'svc_classifier__C':[1, 10]}
 pipe = Pipeline(steps)
 # print "test:", pipe.get_params().keys()
-clf = GridSearchCV(pipe, param_grid= parameters)
-clf.fit(features_train, labels_train)
+grid = GridSearchCV(pipe, param_grid= parameters)
+grid.fit(features_train, labels_train)
+clf = grid.best_estimator_
 pred = clf.predict(features_test)
 report = classification_report(labels_test, pred)
 print report
-
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
@@ -118,4 +121,4 @@ print report
 ### generates the necessary .pkl files for validating your results.
 
 dump_classifier_and_data(clf, my_dataset, features_list)
-#test_classifier(clf, my_dataset, features_list)
+test_classifier(clf, my_dataset, features_list)
