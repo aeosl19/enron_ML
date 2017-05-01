@@ -6,14 +6,19 @@ sys.path.append("../tools/")
 
 from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data, test_classifier
-import numpy as np
 from sklearn.model_selection import train_test_split
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
-features_list = ['poi','salary', 'bonus', 'exercised_stock_options',
-                 'total_poi_emails', 'long_term_incentive', 'total_stock_value', 'restricted_stock'] # You will need to use more features
+features_list = ['poi',
+                 'salary',
+                 'bonus',
+                 'exercised_stock_options',
+                 'total_poi_emails',
+                 'long_term_incentive',
+                 'total_stock_value',
+                 'restricted_stock'] # You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -61,7 +66,6 @@ data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
 
-
 ### Task 4: Try a varity of classifiers
 ### Please name your classifier clf for easy export below.
 ### Note that if you want to do PCA or other multi-stage operations,
@@ -76,7 +80,6 @@ from sklearn.naive_bayes import GaussianNB
 ## add scaler - standardize features
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler()
-#features = scaler.fit_transform(features)
 
 
 
@@ -92,39 +95,67 @@ scaler = MinMaxScaler()
 features_train, features_test, labels_train, labels_test = \
     train_test_split(features, labels, test_size=0.3, random_state=42)
 
-## select beste features
-from sklearn.feature_selection import SelectKBest
-skb = SelectKBest(k=5)
-
-
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.metrics.classification import classification_report
 
-# dtree = DecisionTreeClassifier()
-svc = SVC()
 
-steps = [('scaling',scaler),("SKB", skb),("svc_classifier", svc)]
-parameters = {'svc_classifier__kernel':('rbf', 'linear'), 'svc_classifier__gamma' : [1, 10, 20, 50], 'svc_classifier__C':[1, 5, 10]}
+svc = SVC()
+dTree = DecisionTreeClassifier(random_state=42)
+rForest = RandomForestClassifier()
+gnb = GaussianNB()
+kBest = SelectKBest(f_classif)
+
+### with DecisionTreeClassifier
+
+steps = [('scaling',scaler), ('SKB', kBest), ('GNB', gnb)]
+parameters = dict(SKB__k = [1,2,3,4,5,6,'all'])
+
 pipe = Pipeline(steps)
-# print "test:", pipe.get_params().keys()
-grid = GridSearchCV(pipe, param_grid= parameters)
+grid = GridSearchCV(pipe, param_grid= parameters, scoring='f1')
 grid.fit(features_train, labels_train)
 clf = grid.best_estimator_
-# print "beste estimatero:",grid.best_estimator_
-print grid.best_params_
 pred = clf.predict(features_test)
+
+
+
+# steps = [('scaling',scaler), ('SKB', kBest), ("svc_classifier", svc)]
+# parameters = {'SKB__k': [1,2,3,4,5,6],
+#               'svc_classifier__kernel':('rbf', 'linear'),
+#               'svc_classifier__gamma' : [0.001, 0.0001, 0.00001],
+#               'svc_classifier__C':[1, 10, 100, 1000]}
+#
+# pipe = Pipeline(steps)
+# grid = GridSearchCV(pipe, param_grid= parameters, scoring='precision')
+# grid.fit(features_train, labels_train)
+# clf = grid.best_estimator_
+# print clf
+#
+# pred = clf.predict(features_test)
+#
+# demo = SelectKBest(f_classif, k=2)
+# demo.fit(features_train, labels_train)
+# demoFeatures = demo.transform(features)
+# # print demo.get_support()
 
 ## print results
 target_names = ['Non POI', 'POI']
 report = classification_report(labels_test, pred, target_names= target_names)
 print report
 
+
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
 ### that the version of poi_id.py that you submit can be run on its own and
 ### generates the necessary .pkl files for validating your results.
 
+selected_features =  features_list[2], features_list[6]
+#print selected_features
+# print selected_features
 dump_classifier_and_data(clf, my_dataset, features_list)
-# test_classifier(clf, my_dataset, features_list)
+test_classifier(clf, my_dataset, features_list)
