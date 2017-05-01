@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 features_list = ['poi',
                  'salary',
                  'bonus',
+                 'total_payments',
                  'exercised_stock_options',
                  'total_poi_emails',
                  'long_term_incentive',
@@ -29,8 +30,9 @@ with open("final_project_dataset.pkl", "r") as data_file:
 data_dict.pop('TOTAL', None)
 data_dict.pop('THE TRAVEL AGENCY IN THE PARK', None)
 
-## check for NAN i value
+print data_dict['SKILLING JEFFREY K']
 
+## check for NAN in value
 def check_nan(data):
     if data == 'NaN':
         return 0.0
@@ -48,33 +50,9 @@ for person in data_dict:
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
 
-
-# import matplotlib.pyplot as plt
-# bonus = []
-# total_poi_emails = []
-#
-# for person in my_dataset:
-#     bonus.append(check_nan(my_dataset[person]['bonus']))
-#     total_poi_emails.append(my_dataset[person]['total_poi_emails'])
-#
-# plt.scatter(bonus, total_poi_emails)
-# plt.show()
-
-
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
-
-
-### Task 4: Try a varity of classifiers
-### Please name your classifier clf for easy export below.
-### Note that if you want to do PCA or other multi-stage operations,
-### you'll need to use Pipelines. For more info:
-### http://scikit-learn.org/stable/modules/pipeline.html
-
-# Provided to give you a starting point. Try a variety of classifiers.
-from sklearn.naive_bayes import GaussianNB
-# clf = GaussianNB()
 
 
 ## add scaler - standardize features
@@ -102,6 +80,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.metrics import recall_score, precision_score
 from sklearn.metrics.classification import classification_report
 
 
@@ -114,7 +93,7 @@ kBest = SelectKBest(f_classif)
 ### with DecisionTreeClassifier
 
 steps = [('scaling',scaler), ('SKB', kBest), ('GNB', gnb)]
-parameters = dict(SKB__k = [1,2,3,4,5,6,'all'])
+parameters = dict(SKB__k = [1,2,3,4,5,6,7,'all'])
 
 pipe = Pipeline(steps)
 grid = GridSearchCV(pipe, param_grid= parameters, scoring='f1')
@@ -123,30 +102,11 @@ clf = grid.best_estimator_
 pred = clf.predict(features_test)
 
 
-
-# steps = [('scaling',scaler), ('SKB', kBest), ("svc_classifier", svc)]
-# parameters = {'SKB__k': [1,2,3,4,5,6],
-#               'svc_classifier__kernel':('rbf', 'linear'),
-#               'svc_classifier__gamma' : [0.001, 0.0001, 0.00001],
-#               'svc_classifier__C':[1, 10, 100, 1000]}
-#
-# pipe = Pipeline(steps)
-# grid = GridSearchCV(pipe, param_grid= parameters, scoring='precision')
-# grid.fit(features_train, labels_train)
-# clf = grid.best_estimator_
-# print clf
-#
-# pred = clf.predict(features_test)
-#
-# demo = SelectKBest(f_classif, k=2)
-# demo.fit(features_train, labels_train)
-# demoFeatures = demo.transform(features)
-# # print demo.get_support()
-
 ## print results
 target_names = ['Non POI', 'POI']
 report = classification_report(labels_test, pred, target_names= target_names)
 print report
+# print 'Presicion:', precision_score(labels_test, pred), 'recall:', recall_score(labels_test, pred)
 
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
