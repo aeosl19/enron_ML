@@ -1,0 +1,5 @@
+*.ipynb_checkpoints
+*.zip
+*.ipynb
+.idea/*
+emails_by_address/*
